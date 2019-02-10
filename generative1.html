@@ -70,7 +70,7 @@
 			}*/
 		}
 		
-		function drawTruchetTile(x, y, type) {
+		function drawTile(x, y, type) {
 			switch(drawingType) {
 				case 0:
 					if(type) {
@@ -166,10 +166,11 @@
 					//var hue = Math.round(Math.map(sample, -1, 1, 0, 1) * 360);
 					//ctx.strokeStyle = 'hsl(' + hue + ', 50%, 50%)';
 					var type = sample < 0 ? 0 : 1;
-					drawTruchetTile(x * gridCellSize, y * gridCellSize, type);
+					drawTile(x * gridCellSize, y * gridCellSize, type);
 				}
 			}
 			
+			//
 			var instructionText = 'PRESS SPACE TO CHANGE THE TILE TYPE';
 			ctx.fillStyle = 'yellow';
 			ctx.fillText(instructionText, canvas.width / 2 - ctx.measureText(instructionText).width / 2, canvas.height - 32);
