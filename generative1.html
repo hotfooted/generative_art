@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+		<title>generative art 1</title>
+			<style>
+				html, body {
+					text-align:center;
+					width: 100%;
+					height: 100%;
+					overflow: hidden; /*  Disable scrollbars */
+					display: block;  /* No floating content on sides */
+				}
+			</style>
+	</head>
+	<body>	
+		<script>
+		var now = 0,
+			dt = 0,
+			last = timestamp(),
+			step = 1 / 60,
+			fps = 0;
+		
+	    var canvas = document.createElement("canvas");
+		canvas.width = 480;
+		canvas.height = 320;
+		document.body.appendChild(canvas);
+		var ctx = canvas.getContext("2d");
+
+		var gridCellSize = 16,
+			gridCellSizeHalf = gridCellSize / 2,
+			gridWidth = Math.floor(canvas.width / gridCellSize),
+			gridHeight = Math.floor(canvas.height / gridCellSize),
+		
+			perlin = new Perlin(),
+		
+			radius = .5 * Math.sqrt(gridCellSize * gridCellSize),
+		
+			drawingType = 0,
+		
+			updateTime = 0,
+			updateLast = 0,
+			updateRate = 5;
+
+		document.addEventListener('keyup',   function(ev) { 
+			drawingType = (drawingType + 1) % 5;
+		}, false);
+					
+		function timestamp() {
+			return window.performance && window.performance.now ? window.performance.now() : new Date().getTime();
+		}
+
+		function frame() {
+			now = timestamp();
+			dt = dt + Math.min(1, (now - last) / 1000);
+			while(dt > step) {
+				dt = dt - step;
+				update(step);
+			}
+			draw(dt);
+			last = now;
+			requestAnimationFrame(frame);
+		}
+		
+		function update(step) {
+			updateTime += step;
+		}
+		
+		function drawTruchetTile(x, y, type) {
+			switch(drawingType) {
+				case 0:
+					if(type) {
+						ctx.beginPath();
+						ctx.arc(x + gridCellSize, y + gridCellSize, radius, 1 * Math.PI, 1.5 * Math.PI);
+						ctx.stroke();
+						ctx.beginPath();
+						ctx.arc(x, y, radius, 0 * Math.PI, .5 * Math.PI);
+						ctx.stroke();
+					}
+					else {
+						ctx.beginPath();
+						ctx.arc(x, y + gridCellSize, radius, 1.5 * Math.PI, 2 * Math.PI);
+						ctx.stroke();
+						ctx.beginPath();
+						ctx.arc(x + gridCellSize, y, radius, .5 * Math.PI, 1 * Math.PI);
+						ctx.stroke();
+					}		
+					break;
+				case 1:
+					if(type) {
+						ctx.beginPath();
+						ctx.moveTo(x + gridCellSize / 2, y);
+						ctx.lineTo(x + gridCellSize / 2, y + gridCellSize);
+						ctx.stroke();
+					}
+					else {
+						ctx.beginPath();
+						ctx.moveTo(x, y + gridCellSize / 2);
+						ctx.lineTo(x + gridCellSize, y + gridCellSize / 2);
+						ctx.stroke();
+					}		
+					break;
+				case 2:
+					if(type) {
+						ctx.beginPath();
+						ctx.moveTo(x + gridCellSizeHalf, y);
+						ctx.lineTo(x + gridCellSize, y + gridCellSizeHalf);
+						ctx.moveTo(x, y + gridCellSizeHalf);
+						ctx.lineTo(x + gridCellSizeHalf, y + gridCellSize);
+						ctx.stroke();
+					}
+					else {
+						ctx.beginPath();
+						ctx.moveTo(x + gridCellSizeHalf, y);
+						ctx.lineTo(x, y + gridCellSizeHalf);
+						ctx.moveTo(x + gridCellSize, y + gridCellSizeHalf);
+						ctx.lineTo(x + gridCellSizeHalf, y + gridCellSize);
+						ctx.stroke();
+					}			
+					break;
+				case 3:
+					ctx.fillStyle = 'white';
+					if(type) {
+						ctx.fillRect(x, y, gridCellSize, gridCellSizeHalf);
+					}
+					else {
+						ctx.fillRect(x, y + gridCellSizeHalf, gridCellSize, gridCellSizeHalf);
+					}			
+					break;
+				case 4:
+					ctx.fillStyle = 'white';
+					if(type) {
+						ctx.beginPath();
+						ctx.moveTo(x + gridCellSizeHalf, y);
+						ctx.lineTo(x + gridCellSize, y + gridCellSizeHalf);
+						ctx.lineTo(x, y + gridCellSizeHalf);
+						ctx.lineTo(x + gridCellSizeHalf, y + gridCellSize);
+						ctx.closePath();
+						ctx.fill();
+					}
+					else {
+						ctx.beginPath();
+						ctx.moveTo(x + gridCellSizeHalf, y);
+						ctx.lineTo(x, y + gridCellSizeHalf);
+						ctx.lineTo(x + gridCellSize, y + gridCellSizeHalf);
+						ctx.lineTo(x + gridCellSizeHalf, y + gridCellSize);
+						ctx.closePath();
+						ctx.fill();
+					}
+					break;
+			}
+		}
+
+		function draw(step) {
+			ctx.fillStyle = 'black';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+			
+			ctx.strokeStyle = 'white';
+			for(var y = 0; y < gridHeight; y++) {
+				for(var x = 0; x < gridWidth; x++) {
+					var sample = perlin.noise(x / gridCellSize, y / gridCellSize, updateTime);
+					//var hue = Math.round(Math.map(sample, -1, 1, 0, 1) * 360);
+					//ctx.strokeStyle = 'hsl(' + hue + ', 50%, 50%)';
+					var type = sample < 0 ? 0 : 1;
+					drawTruchetTile(x * gridCellSize, y * gridCellSize, type);
+				}
+			}
+			
+			var instructionText = 'PRESS SPACE TO CHANGE THE TILE TYPE';
+			ctx.fillStyle = 'yellow';
+			ctx.fillText(instructionText, canvas.width / 2 - ctx.measureText(instructionText).width / 2, canvas.height - 32);
+		}
+		
+		//well we all know where this is from right?
+		//just in case: https://mrl.nyu.edu/~perlin/noise/
+		function Perlin() {
+			this.p = [];
+			var permutation = [
+				151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,
+				140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,
+				247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,
+				57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,
+				74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,
+				60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,
+				65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,
+				200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,
+				52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,
+				207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,
+				119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,
+				129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,
+				218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,
+				81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,
+				184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,
+				222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
+			];
+			
+			for(var i = 0; i < 256; i++) {
+				this.p[256 + i] = this.p[i] = permutation[i];
+			}
+		}
+		Perlin.prototype.fade = function(t) {
+			return t * t * t * (t * (t * 6 - 15) + 10);
+		}
+		Perlin.prototype.lerp = function(t, a, b) {
+			return a + t * (b - a);
+		}
+		Perlin.prototype.grad = function(hash, x, y, z) {
+			var h = hash & 15;
+			var u = h < 8 ? x : y;
+			var v = h < 4 ? y : h === 12 || h === 14 ? x : z;
+			return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);
+		}
+		Perlin.prototype.noise = function(x, y, z) {
+			//find unit cube that contains point
+			var X = Math.floor(x) & 255;
+			var Y = Math.floor(y) & 255;
+			var Z = Math.floor(z) & 255;
+			//find relative x,y,z of point in cube
+			x -= Math.floor(x);
+			y -= Math.floor(y);
+			z -= Math.floor(z);
+			//compute fade curves for each of x,y,z
+			var u = this.fade(x);
+			var v = this.fade(y);
+			var w = this.fade(z);
+			//hash coordinates of the 8 cube corners
+			var A = this.p[X] + Y;
+			var AA = this.p[A] + Z;
+			var AB = this.p[A + 1] + Z;
+			var B = this.p[X + 1] + Y;
+			var BA = this.p[B] + Z;
+			var BB = this.p[B + 1] + Z;
+			
+			//and add blended results from 8 corners of cube
+			return this.lerp(w, 
+					this.lerp(v,
+					this.lerp(u, this.grad(this.p[AA], x, y, z), this.grad(this.p[BA], x - 1, y, z)),
+					this.lerp(u, this.grad(this.p[AB], x, y - 1, z), this.grad(this.p[BB], x - 1, y - 1, z))),
+					this.lerp(v, 
+					this.lerp(u, this.grad(this.p[AA + 1], x, y, z - 1), this.grad(this.p[BA + 1], x - 1, y, z - 1)),
+					this.lerp(u, this.grad(this.p[AB + 1], x, y - 1, z - 1), this.grad(this.p[BB + 1], x - 1, y - 1, z - 1))));
+		}
+		
+		requestAnimationFrame(frame);
+		</script>
+	</body>
+</html>
