@@ -15,7 +15,7 @@
 	</head>
 	<body>	
 		<script>
-		var now = 0,
+		var now = 0,//keep this stuff for future experiments
 			dt = 0,
 			last = timestamp(),
 			step = 1 / 60,
@@ -64,6 +64,10 @@
 		
 		function update(step) {
 			updateTime += step;
+			/*if(updateTime - updateLast > updateRate) {
+				//do stuff
+				updateLast = updateTime;
+			}*/
 		}
 		
 		function drawTruchetTile(x, y, type) {
